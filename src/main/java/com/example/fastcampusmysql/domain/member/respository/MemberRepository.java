@@ -23,6 +23,14 @@ public class MemberRepository {
 
     private final String TABLE = "member";
 
+    private static final RowMapper<Member> rowMapper = (ResultSet rs, int rowNum) -> Member.builder()
+            .id(rs.getLong("id"))
+            .email(rs.getString("email"))
+            .nickname(rs.getString("nickname"))
+            .birthday(rs.getObject("birthday", LocalDate.class))
+            .createdAt(rs.getObject("createdAt", LocalDateTime.class))
+            .build();
+
     public Optional<Member> findById(Long id) {
         /**
          * select * from Member where id = :id
@@ -30,14 +38,6 @@ public class MemberRepository {
         var sql = String.format("SELECT * FROM %s WHERE id = :id", TABLE);
         var param = new MapSqlParameterSource()
                 .addValue("id", id);
-
-        RowMapper<Member> rowMapper = (ResultSet rs, int rowNum) -> Member.builder()
-                .id(rs.getLong("id"))
-                .email(rs.getString("email"))
-                .nickname(rs.getString("nickname"))
-                .birthday(rs.getObject("birthday", LocalDate.class))
-                .createdAt(rs.getObject("createdAt", LocalDateTime.class))
-                .build();
 
         var member = namedJdbcTemplate.queryForObject(sql, param, rowMapper);
 
@@ -74,7 +74,9 @@ public class MemberRepository {
     }
 
     private Member update(Member member) {
-        // TODO : implemented
+        String sql = String.format("UPDATE %s set email = :email, nickname = :nickname, birthday = :birthday WHERE id = :id", TABLE);
+        SqlParameterSource params = new BeanPropertySqlParameterSource(member);
+        namedJdbcTemplate.update(sql, params);
         return member;
     }
 
